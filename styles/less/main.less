@@ -1,0 +1,42 @@
+@import "reset.less";
+@import "shared.less";
+@import "icons.less";
+@import "layouts.less";
+@import "start-region.less";
+@import "talk.less";
+
+
+html,
+body,
+#base-layout-wrap{
+	margin:0;
+	padding:0;
+	height:100%;
+}
+
+#base-layout-wrap{
+    font-family: 'Open Sans', sans-serif;
+	font-size: 10pt;
+}
+
+a{
+  	text-decoration: none;
+	color: #3a609b
+}
+
+.logo{
+	position: relative;
+	width: 93px;
+	height: 15px;
+	color: #fff;
+
+	.logo-in{
+		position: absolute;
+		top: 0;
+		left: 0;
+		display: block;
+		width: 100%;
+		height: 100%;
+		background: url("/i/l.png") 0 0 no-repeat;
+	}
+}

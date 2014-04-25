@@ -1,0 +1,22 @@
+﻿<div class="comment-i comment-<%= id %> from-user-<%= from_id %>" data-comment_id="<%= id %>" data-from_id="<%= from_id %>" >
+    <a class="img-wrap" href="http://vk.com/id<%= from_id %>" target="_blank"><img class="img-in" src="/i/0.gif" /></a>
+    <div class="comment-area">
+        <div class="comment-panel">
+            <a class="user-name" href="http://vk.com/id<%= from_id %>" target="_blank"></a>
+        </div>
+
+        <div class="comment-body"></div>
+        <div class="attachments">
+            <div class="photo-attachments attachments-i"></div>
+            <div class="doc-attachments attachments-i"></div>
+            <div class="page-attachments attachments-i"></div>
+            <div class="video-attachments attachments-i"></div>
+            <div class="link-attachments attachments-i"></div>
+            <div class="audio-attachments attachments-i"></div>
+        </div>
+
+        <a class="reply-comment" href="javascript:;">Ответить</a> <span class="likes" title="Количество лайков в ВК. Ставить лайки из талкинатора, к сожалению нельзя."><%= likes.count %></span>
+    </div>
+
+    <div class="answers"></div>
+</div>
