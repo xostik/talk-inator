@@ -1,0 +1,126 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+
+    <script src="//vk.com/js/api/openapi.js" type="text/javascript"></script>
+
+	<script type="text/javascript">
+	    VK.init({
+	        apiId: 2457321
+	    });
+	    function authInfo(response) {
+	        if (response.session) {
+	            alert('user: ' + response.session.mid);
+	        } else {
+	            alert('not auth');
+	        }
+	    }
+	    VK.Auth.getLoginStatus(authInfo);
+	    VK.UI.button('login_button');
+	</script>
+</head>
+<body style="">
+
+        <div id="login_button" onclick="VK.Auth.login(authInfo);"></div>
+	
+	<div id="post"></div>
+	<div id="comments"></div>
+	
+	<script>
+	    var u,
+	        qObj = getQuery(),
+	        qDetails = getDetails(qObj.i);
+
+	    initDiscussion(qObj.i);
+	    initComments(qObj.i);
+
+	    function getQuery() {
+	        var s = location.search.substr(1),
+	            res = s.split('&'),
+	            result = {},
+	            tmp;
+	        for (var i = 0, ii = res.length; i < ii; i++) {
+	            tmp = res[i].split('=');
+	            result[tmp[0]] = tmp[1];
+	        }
+	        return result;
+	    }
+
+	    //------------------
+
+	    function getDetails(s) {
+	        var tmp = s.split('_');
+	        return {
+	            wallId: tmp[0],
+	            topicId: tmp[1]
+	        };
+	    }
+
+	    //------------------
+
+	    function initComments(postLink) {
+	        var parsedIds = postLink.split('_')
+	        VK.Api.call('wall.getComments', { owner_id: parsedIds[0], post_id: parsedIds[1], count: 100 }, function (r) {
+	            for (var i = 0, ii = r.response.length; i < ii; i++) {
+	                renderComment(r.response[i]);
+	            }
+	        });
+	    }
+
+	    //------------------
+
+	    function initDiscussion(postLink) {
+	        VK.Api.call('wall.getById', { posts: [postLink] }, function (r) {
+	            renderPost(r.response[0]);
+	        });
+	    }
+
+	    //------------------
+
+	    function renderPost(postObj) {
+	        $('#post').text(postObj.text);
+	    }
+
+	    //------------------
+
+	    function renderComment(commentObj) {
+	        var comment = '<div class="comment-i cid-' + commentObj.cid + '" data-uid="' + commentObj.uid + '" data-cid="' + commentObj.cid + '" style="padding-top:20px; padding-left:40px;">~ ' + commentObj.text + '</div>'
+	        if (commentObj.reply_to_cid) {
+	            $('.cid-' + commentObj.reply_to_cid).append(comment);
+	        } else {
+	            $('#comments').append(comment);
+	        }
+
+	    }
+
+
+	    //------------------
+
+	    $('body').dblclick(function () {
+	        VK.Auth.login(function (response) {
+	            if (response.session) {
+	                /* Пользователь успешно авторизовался */
+	                u = response;
+	                debugger;
+	                if (response.settings) {
+	                    /* Выбранные настройки доступа пользователя, если они были запрошены */
+	                }
+	            } else {
+	                /* Пользователь нажал кнопку Отмена в окне авторизации */
+	            }
+	        }, 1);
+	    });
+
+
+	    $('#post').dblclick(function () {
+	        VK.Api.call('wall.addComment', { owner_id: 961253, post_id: 451, text: 'Comment, maaan', access_token: u.session.sig }, function (r) {
+	            debugger;
+	            renderPost(r.response[0]);
+	        });
+	    });
+	    //961253_451
+	</script>
+
+</body>
+</html>

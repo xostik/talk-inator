@@ -1,0 +1,46 @@
+{
+    "manifest_version": 2,
+    "name": "Discussion vk",
+    "version": "0.1",
+
+    "icons": {
+        "128": "128x128.png"
+    },
+
+    "permissions": [
+        "tabs",
+        "http://vk.com/*",
+        "https://vk.com/*",
+        "http://page2page.ru/vk/*"
+    ],
+
+	"background": {
+        "page": "background.html"
+    },
+
+    "content_scripts":[{
+        "matches": [
+            "http://vk.com/*",
+            "https://vk.com/*"
+        ],
+        "js": [
+			"jquery.js",
+            "script_in_content_vk.js"
+        ],
+		"all_frames": true
+    },{
+        "matches": [
+            "http://talk.ru/*"
+        ],
+        "js": [
+			"jquery.js",
+            "script_in_content_discus.js"
+        ],
+		"all_frames": true
+    }],
+
+    "browser_action": {
+        "default_title": "Application"
+        //  "default_popup": "login.html"  
+    }
+}
