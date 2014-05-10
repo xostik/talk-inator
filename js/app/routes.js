@@ -1,7 +1,7 @@
 define(['underscore'], function(_){
     var routesList = {
             'talk': {
-                path: ':talkPath',
+                path: 'wall:talkPath',
                 bootstrapState: 'talk'
             },
             'start': {

@@ -56,7 +56,7 @@
         auth: function(){
             VK.Auth.login(function(r){
               debugger;
-            }, 16 | 131072 | 128);
+            }, 2 | 8192 | 16 | 131072 | 128);
         },
 
         destroy: function(){

@@ -1,6 +1,6 @@
 define([
     'common-layout',
-    'talk-region',
+    'vk-talk-loader',
     'talk-region-view',
     'empty-region',
     'header-region-view',

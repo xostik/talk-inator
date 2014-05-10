@@ -1,4 +1,4 @@
-define(['abstract-layout', 'underscore', requirePaths['common-layout.tpl'], 'inheritance'], function( Layout, _, tpl ){
+define(['abstract-layout', 'underscore', requirePaths['common-layout.tpl'], 'utils'], function( Layout, _, tpl ){
     var CommonLayout = function(){
         _.superClass( CommonLayout, this );
 

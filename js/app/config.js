@@ -41,8 +41,12 @@ var require = {
             'simple-layout':    'app/base-entities/layouts/simple-layout',
             'common-layout':    'app/base-entities/layouts/common-layout',
 
-            'empty-region':     'app/base-entities/models/empty-region',
-            'talk-region':      'app/base-entities/models/talk-region',
+            'empty-region':             'app/base-entities/models/empty-region',
+            'abstract-comments':        'app/base-entities/models/abstract-comments',
+            'vk-comments':              'app/base-entities/models/vk-comments',
+            'comments-tree':            'app/base-entities/models/comments-tree',
+            'talk-region':              'app/base-entities/models/talk-region',
+            'vk-talk-loader':           'app/base-entities/models/vk-talk-loader',
 
             'header-region-view':   'app/base-entities/regions/header-region',
             'footer-region-view':   'app/base-entities/regions/footer-region',
@@ -56,7 +60,7 @@ var require = {
             // МОДУЛИ
 
             // УТИЛИТЫ
-            'inheritance':              'app/utils/inheritance',
+            'utils':                    'app/utils/utils',
             'when-ready-for-group':     'app/utils/when-ready-for-group',
 
 

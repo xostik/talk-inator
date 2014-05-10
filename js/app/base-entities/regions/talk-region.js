@@ -1,4 +1,4 @@
-define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl'], requirePaths['comment.tpl'], 'router'], function(Region, _, user, tpl, commentTpl, router){
+define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl'], requirePaths['comment.tpl'], 'router', 'utils'], function(Region, _, user, tpl, commentTpl, router){
     var TalkRegion = Region.extend({
         tagName: 'div',
 
@@ -18,27 +18,25 @@ define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl']
             videoPlayer: _.template('<iframe width="720" height="410" border="0" src="<%= player %>"></iframe>')
         },
 
+        htmlCache: {
+            $html: $('html'),
+            $talkArea: undefined
+        },
+
         events:{
             'click .video-wrap': 'playVideo',
             'click .doc-wrap': 'togglePict',
             'click .reply-comment': 'startReplyComment',
             'click .cancel-reply-subject': 'closeAnswer',
             'click a.img-wrap': 'togglePict',
-            'click .comment-post': 'openAnswer',
+            'click .comment-post': 'startComment',
             'focusin .answer-text': 'focusAnswer',
-            'blur-of-answer .answer-area': 'blurOfAnswerHandler'
+            'blur-of-answer .answer-area': 'blurOfAnswerHandler',
+            'click .send': 'onCommentSend'
         },
 
         initialize: function(){
             var _this = this;
-
-            this.model.user().whenReady(function(u){
-                if(u.isAuth()){
-                    _this.hideNotAuthMessage();
-                }else{
-                    _this.showNotAuthMessage();
-                }
-            });
 
             this.initHandlers();
         },
@@ -86,14 +84,113 @@ define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl']
         },
 
         handleNewComment: function(commentObj){
-            var $comment = this.buildComment(commentObj);
-
-            if(commentObj.reply_to_comment){
+            var $comment = this.buildComment(commentObj),
+                $parent, $notOpenAnswers;
+            /*if(commentObj.reply_to_comment){
                 $('.talk-area .comment-' + commentObj.reply_to_comment + '>.answers')
                     .append($comment);
             }else{
                 $('.talk-area').append($comment);
             }
+
+            if(this.model.handlers().onAllCommentsReady.state() == 'resolved'){
+                $comment
+                    .css({backgroundColor: 'rgba(255, 223, 0, 0.2)'})
+                    .animate({backgroundColor: 'rgba(255, 223, 0, 0)'}, {duration: 1000});
+            }*/
+
+            // this.model.handlers().onAllCommentsReady.state() == 'resolved'
+            // нет - просто всавляем, как и раньше
+
+            // ДА -
+            // является ли ответом на другой коммент
+            // нет - вставляем вниз как unreadable
+            // да - смотрим, нет ли в его потомках, кого нибудь, лежащего в not-open области
+            // есть - вставляем его как unreadable и увеличиваем count not-open области
+
+            // нет - смотрим где лежит current-коммент
+            // выше экрана - вставляем как unreadable с адаптацией скролла
+            // ниже - вставляем вниз как unreadable
+            // внутри - добавляем в not-open область
+
+
+            if(this.model.handlers().onAllCommentsReady.state() != 'resolved'){
+                if(commentObj.reply_to_comment){
+                    $parent = $('.talk-area .comment-' + commentObj.reply_to_comment + '>.answers');
+                }
+                this.quickInsertComment($comment, $parent);
+            }else{
+                if(!commentObj.reply_to_comment){
+                    this.insertComment($comment, undefined, true);
+                }else{
+                    $parent = $('.talk-area .comment-' + commentObj.reply_to_comment + '>.answers');
+                    $notOpenAnswers = $parent.children('.not-open-answers');
+
+                    if($notOpenAnswersOuter.data('count') > 0){
+                        $parent.append($comment);
+                        this.commentUpInNotOpenAnswers($notOpenAnswersOuter);
+                    }
+                }
+            }
+        },
+
+        quickInsertComment: function($comment, $parent){
+            if(!$parent){
+                this.htmlCache.$talkArea
+                    .append($comment);
+            }else{
+                $parent.append($comment);
+            }
+        },
+
+        insertComment: function($comment, $parent, isNotReadedComment){
+            var $notOpenAnswersOuter;
+
+            if(isNotReadedComment){
+                $comment.addClass('not-readed');
+                // добавляем в наблюдаемые
+            }
+
+            if(!$parent){
+                this.htmlCache.$talkArea
+                    .append($comment);
+            }else{
+                $notOpenAnswersOuter = $parent.children('.not-open-answers');
+
+                if($notOpenAnswersOuter.data('count') > 0){
+                    $notOpenAnswersOuter
+                        .append($comment);
+
+                    this.commentUpInNotOpenAnswers($notOpenAnswersOuter);
+                }else{
+                    $parent.append($comment);
+
+                    $notOpenAnswersOuter = $parent.parents('.not-open-answers');
+
+                    if($notOpenAnswersOuter.length){
+                        this.commentUpInNotOpenAnswers($notOpenAnswersOuter);
+                    }
+                }
+            }
+        },
+
+        commentUpInNotOpenAnswers: function($notOpenAnswers){
+            var n = $notOpenAnswers.data('count') + 1,
+                tx = this.genNotOpenAnswersText(n);
+
+            if(n == 1){
+                $notOpenedAnswersArea.addClass('active');
+            }
+
+            $notOpenAnswers.data('text', tx);
+            $notOpenAnswers.data('count', n);
+        },
+
+        appendCommentToNotOpenedBox: function($comment, $parentComment){
+            var $notOpenedAnswersArea = $parentComment.find('.not-open-answers');
+            $notOpenedAnswersArea
+                .append($comment);
+            this.commentUpInNotOpenAnswers($notOpenedAnswersArea);
         },
 
         handleNewUser: function(user){
@@ -104,9 +201,9 @@ define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl']
         buildComment: function(commentObj){
             var tx = this.clearCommentText(commentObj.text);
             var $c = $(this.templates.comment(commentObj)),
-                user = this.model.userCash()[commentObj.from_id];
+                user = this.model.userCache()[commentObj.from_id];
 
-            if(user){
+            if(user.isReady()){
                 this.addUserDataToComment($c, user);
             }else{
                 $c.find('.user-name')
@@ -130,10 +227,16 @@ define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl']
         },
 
         addUserDataToComment: function($comment, user){
-            $comment.children('.comment-area').find('.user-name')
-                .text(user.last_name + ' ' + user.first_name);
+            if(user.type() != 'user'){
+                $comment.children('.comment-area').find('.user-name')
+                    .text(user.name());
+            }else{
+                $comment.children('.comment-area').find('.user-name')
+                    .text(user.last_name() + ' ' + user.first_name());
+            }
+
             $comment.children('.img-wrap').find('.img-in')
-                .attr('src', user.photo_50);
+                .attr('src', user.photo_50());
         },
 
         addAttachments: function($el, attachments){
@@ -236,8 +339,8 @@ define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl']
                 $el = $(e.currentTarget),
                 $comment = $el.parents('.comment-i'),
                 dt = $comment.data(),
-                user = this.model.userCash()[dt.from_id];
-            if(user.dat_first_name){
+                user = this.model.userCache()[dt.from_id];
+            if(user.dat_first_name()){
                 _this.startReplyCommentAction(user, dt.comment_id, dt.from_id);
             }else{
                 VK.Api.call('users.get', {
@@ -245,11 +348,15 @@ define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl']
                     name_case: 'dat',
                     v: 5.21
                 }, function(r){
-                    user.dat_first_name = r.response[0].first_name;
-                    user.dat_last_name = r.response[0].last_name;
+                    user.dat_first_name( r.response[0].first_name );
+                    user.dat_last_name( r.response[0].last_name );
                     _this.startReplyCommentAction(user, dt.comment_id, dt.from_id);
                 });
             }
+        },
+
+        startComment: function(){
+            this.openAnswer();
         },
 
         startReplyCommentAction: function(user, comment_id, from_id){
@@ -286,8 +393,18 @@ define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl']
         },
 
         openAnswer: function(){
-            $('.answer-area').addClass('active');
-            this.startWatchBlurOfAnswer();
+            if(!this.isInVk()){
+                $('.answer-area textarea').blur();
+                this.showAttention('Оставлять комментарии можно только после установки нашего приложения для браузера google chrome. Это связано с тем, что Вконтакте не позволяет оставлять комментарии с других сайтов.');
+            }else{
+                if(!$('.answer-area').hasClass('active')){
+                    $('.answer-area')
+                        .addClass('active')
+                        .find('textarea')
+                        .focus();
+                    this.startWatchBlurOfAnswer();
+                }
+            }
         },
 
         closeAnswer: function(){
@@ -310,14 +427,43 @@ define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl']
         },
 
         watchBlurOfAnswer: function(e){
-            if ($(e.target).closest('.answer-area, .reply-comment').length == 0){
+            if ($(e.target).closest('.answer-area, .reply-comment, .comment-post').length == 0){
                 $('.answer-area').trigger('blur-of-answer');
             }
         },
 
+        onCommentSend: function(){
+            this.model.forceCommentUpdate(700);
+        },
+
         render: function(){
+            var _this = this;
+
             this.$el.html(this.template({}));
+
+            this.htmlCache.$talkArea = this.$el.find('.talk-area');
+
+            this.model.user().whenReady(function(u){
+                if(u.isAuth()){
+                    _this.hideNotAuthMessage();
+                }else{
+                    _this.showNotAuthMessage();
+                }
+            });
+
             return this.$el;
+        },
+
+        showAttention: function(mess){
+            alert(mess);
+        },
+
+        genNotOpenAnswersText: function(n){
+            return n + ' новых комментария';
+        },
+
+        isInVk: function(){
+             return location.hash.length > 0;
         }
 
     });

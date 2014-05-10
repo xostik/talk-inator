@@ -1,3 +1,11 @@
+.not-auth-message{
+	display: none;
+}
+
+section.post-area{
+	padding-bottom: 100px;
+}
+
 .comment-i{
 	padding-top: 20px;
 
@@ -17,6 +25,12 @@
 	.user-name{
 		font-weight: bold;
 		font-family: Arial;
+	}
+
+	.post-time{
+		font-size: 8pt;
+		opacity: 0.3;
+		margin-left: 5px;
 	}
 
 	.reply-comment{
@@ -198,5 +212,19 @@
 		background: #aaa;
 		color: white;
 		padding: 4px 15px 5px 15px;
+	}
+}
+
+
+.not-open-answers{
+	display: none;
+	&.active{
+		display: inline-block;
+		padding: 4px 75px 5px 75px;
+		margin-top: 15px;
+		margin-left: -32px;
+		background-color: #dee5eb;
+		color: #6A7989;
+		font-size: 9pt;
 	}
 }

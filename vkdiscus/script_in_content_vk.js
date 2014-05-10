@@ -35,7 +35,7 @@ function init() {
 
 // ------------------------------
 
-function initHelperButtons(){
+function initHelperButtons() {
 	setInterval(function(){
 		getUnhandledPosts()
 			.each(function(){
@@ -43,7 +43,7 @@ function initHelperButtons(){
 					postId = findPostIdByPostElement($el);
 					
 				$el
-					.prepend('<button class="discus_handled_btn bhb-' + postId + '" style="position: absolute; top: 0px; right: 20px; z-index: 10000000;" data-post-id="' + postId + '">go</button>')
+					.prepend('<button class="discus_btn discus_handled_btn bhb-' + postId + '" style="position: absolute; top: 0px; right: 20px; z-index: 10000000;" data-post-id="' + postId + '">go</button>')
 					//.prepend('<button class="discus_for_send_btn bfsb-' + postId +  '" style="position: absolute; top: 0px; right: 20px;">-1</button>')
 					.addClass('discus_handled');
 			});
