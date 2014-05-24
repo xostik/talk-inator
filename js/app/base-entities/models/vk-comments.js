@@ -5,9 +5,12 @@ define(['underscore', 'backbone', 'abstract-comments'], function( _, Backbone, A
             var likesCount = this.likes().count;
             this.likes(likesCount);
 
+            if(!this.attachments){
+                this.set('attachments', -1);
+            }
 
             var args = _.toArray(arguments);
-            AbstractComments.prototype.initialize.apply(this, args);
+            AbstractComment.prototype.initialize.apply(this, args);
         }
     })
 

@@ -17,15 +17,15 @@
 *
 * */
 
-define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tree', 'aspic'], function( _, Backbone, $, user, UserModels, CommentsTree ){
-    var TalkRegion = Backbone.AspicModel.extend({
+define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'vk-comments', 'comments-tree', 'post', 'aspic'], function( _, Backbone, $, user, UserModels, VK_Comment, CommentsTree, Post ){
+    var VK_TalkLoader = Backbone.AspicModel.extend({
         initialize: function () {
             var _this = this;
 
             this.set({
                 user: user.getCurrentUser(),
                 lastCommentCount: 0,
-                postObj: -1,
+                post: -1,
                 pingInterval: -1,
                 handlers: {
                     onPostReady: $.Callbacks(),
@@ -65,12 +65,19 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tre
 
             // делаем запрос поста
             VK.Api.call('wall.getById', { posts: [talkPath], extended: 1, v:5.21 }, function (r) {
-                var n = r.response.items[0].comments.count;
-                _this.postObj(r.response.items[0]);
+                var n = r.response.items[0].comments.count,
+                    likes = r.response.items[0].likes.count,
+                    post = r.response.items[0],
+                    user = _this._handleUser(post.from_id);
+
+                post.likes = likes;
+                post = new Post(post, {user: user});
+
+                _this.post(post);
                 _this._handleExtendedInfo(r.response);
                 _this.lastCommentCount(n);
 
-                _this._postReadyHandler(r.response.items[0]);
+                _this._postReadyHandler(post);
                 _this._rangeCommentRequest(0, Math.floor(n/100.0));
 
                 _this._resolveAllCommentsReady((Math.floor(n/100.0)+4)*config.MIN_REQUEST_PERIOD);
@@ -105,7 +112,7 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tre
             this._stopPingNewComments();
 
             for(var i = from; i <= to; i++){
-                this._addToExeQueue(this._commentRequestFunction, this.postObj(), i*100);
+                this._addToExeQueue(this._commentRequestFunction, this.post(), i*100);
             }
 
             this._startPingNewComments(to*config.MIN_REQUEST_PERIOD);
@@ -118,7 +125,7 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tre
             offset = (offset<0) ? 0: offset;
 
             _.delay(function(ctx, offs){
-                var f = _.bind( ctx._commentRequestFunction, ctx, ctx.postObj(), offs ),
+                var f = _.bind( ctx._commentRequestFunction, ctx, ctx.post(), offs ),
                     pingInterval = setInterval(f, config.PING_NEW_COMMENT_PERIOD);
                 ctx.pingInterval(pingInterval);
             }, delay, this, offset);
@@ -139,7 +146,7 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tre
             count = count || 100;
 
             VK.Api.call('wall.getComments', {
-                owner_id: postObj.from_id,
+                owner_id: postObj.from_id(),
                 post_id: postObj.id,
                 count: count,
                 need_likes: 1,
@@ -182,7 +189,20 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tre
         // ------------------
 
         _handleComment: function(commentObj){
+            var parent, user;
 
+            if(!this.comments().isExist(commentObj.id)){
+                user = this._handleUser(commentObj.from_id);
+
+                parent = this.comments().getById(commentObj.reply_to_comment);
+                this.comments().addComment(
+                    new VK_Comment(commentObj, {parent: parent, user: user})
+                );
+            }else{
+                commentObj.likes = commentObj.likes.count;
+                this.comments().updateComment(commentObj.id, commentObj);
+            }
+            /*
             if(this.commentsCash()[commentObj.id] === undefined){
                 this._handleUser(commentObj.from_id);
                 this.commentsCash()[commentObj.id] = commentObj;
@@ -193,7 +213,7 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tre
                 return commentObj;
             }else{
                 return false;
-            }
+            }*/
         },
 
         // ------------------
@@ -203,6 +223,8 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tre
                 this.userForFindList().push(uid);
                 this.userCache()[uid] = new UserModels.OtherUser({promiseInitData: $.Deferred()});
             }
+
+            return this.userCache()[uid];
         },
 
         // ------------------
@@ -311,7 +333,7 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tre
 
                 var offset = Math.round(this.lastCommentCount()/50.0) * 50 - 50;
                 offset = (offset<0) ? 0: offset;
-                this._addToExeQueue(this._commentRequestFunction, this.postObj(), offset);
+                this._addToExeQueue(this._commentRequestFunction, this.post(), offset);
 
                 this._startPingNewComments(dly);
             },this, delay), delay);
@@ -329,12 +351,6 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'comments-tre
 
     // ------------------
 
-    return {
-        getModel: function (talkPath) {
-            return new TalkRegion({
-                talkPath: talkPath
-            });
-        }
-    };
+    return VK_TalkLoader;
 });
 

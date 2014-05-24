@@ -1,10 +1,10 @@
-﻿<%if(from_id>0){%>
-    <div class="comment-i comment-<%= id %> from-user-<%= from_id %>" data-comment_id="<%= id %>" data-from_id="<%= from_id %>" >
-        <a class="img-wrap" href="http://vk.com/id<%= from_id %>" target="_blank"><img class="img-in" src="/i/0.gif" /></a>
+﻿<%if(from_id()>0){%>
+    <div class="comment-i comment-<%= id %> from-user-<%= from_id() %>" data-comment_id="<%= id %>" data-from_id="<%= from_id() %>" >
+        <a class="img-wrap" href="http://vk.com/id<%= from_id() %>" target="_blank"><img class="img-in" id="img-for-<%= id %>-<%= from_id() %>" src="/i/0.gif" /></a>
         <div class="comment-area">
             <div class="comment-panel">
-                <a class="user-name" href="http://vk.com/id<%= from_id %>" target="_blank"></a>
-                <span class="post-time"><% print(_.timeAgo(date)) %></span>
+                <a class="user-name" id="name-for-<%= id %>-<%= from_id() %>" href="http://vk.com/id<%= from_id() %>" target="_blank"></a>
+                <span class="post-time"></span>
             </div>
 
             <div class="comment-body"></div>
@@ -18,19 +18,20 @@
             </div>
 
             <a class="reply-comment" href="javascript:;">Ответить</a>
-            <span class="likes" title="Количество лайков в ВК. Ставить лайки из талкинатора, к сожалению нельзя."><%= likes.count %></span>
+            <span class="likes" title="Количество лайков в ВК. Ставить лайки из талкинатора, к сожалению нельзя."></span>
+            <a href="javascript:;" class="open-comments">Развернуть этот и другие новые комментарии</a>
         </div>
 
-        <div class="answers"></div>
+        <div class="answers answers-of-<%= id %>"></div>
         <div class="not-open-answers" data-count="0"></div>
     </div>
 <%}else{%>
-    <div class="comment-i comment-<%= id %> from-user-<%= from_id %>" data-comment_id="<%= id %>" data-from_id="<%= from_id %>" >
-        <a class="img-wrap" href="http://vk.com/public<% print(-from_id) %>" target="_blank"><img class="img-in" src="/i/0.gif" /></a>
+    <div class="comment-i comment-<%= id %> from-user-<%= from_id() %>" data-comment_id="<%= id %>" data-from_id="<%= from_id() %>" >
+        <a class="img-wrap" href="http://vk.com/public<% print(-from_id()) %>" target="_blank"><img class="img-in" id="img-for-<%= id %>-<%= from_id() %>" src="/i/0.gif" /></a>
         <div class="comment-area">
             <div class="comment-panel">
-                <a class="user-name" href="http://vk.com/public<% print(-from_id) %>" target="_blank"></a>
-                <span class="post-time"><% print(_.timeAgo(date)) %></span>
+                <a class="user-name" id="name-for-<%= id %>-<%= from_id() %>" href="http://vk.com/public<% print(-from_id()) %>" target="_blank"></a>
+                <span class="post-time"></span>
             </div>
 
             <div class="comment-body"></div>
@@ -43,10 +44,10 @@
                 <div class="audio-attachments attachments-i"></div>
             </div>
 
-            <a class="reply-comment" href="javascript:;">Ответить</a> <span class="likes" title="Количество лайков в ВК. Ставить лайки из талкинатора, к сожалению нельзя."><%= likes.count %></span>
+            <a class="reply-comment" href="javascript:;">Ответить</a> <span class="likes" title="Количество лайков в ВК. Ставить лайки из талкинатора, к сожалению нельзя."></span>
         </div>
 
-        <div class="answers"></div>
+        <div class="answers answers-of-<%= id %>"></div>
         <div class="not-open-answers" data-count="0">
             <div class="area-title"></div>
             <div class="area-content"></div>

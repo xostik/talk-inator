@@ -2,15 +2,25 @@
 	display: none;
 }
 
-section.post-area{
+.talk-area{
 	padding-bottom: 100px;
 }
 
 .comment-i{
+	position: relative;
 	padding-top: 20px;
+	min-width: 300px;
 
 	a.img-wrap{
 		display: inline-block;
+	}
+
+	.photo-attachments, .doc-attachments, .video-attachments{
+		margin-right: -8px;
+	}
+
+	.photo-attachments .img-wrap, .doc-attachments .doc-wrap, .video-attachments .video-wrap{
+		margin-right: 8px;
 	}
 
 	.comment-area{
@@ -41,6 +51,61 @@ section.post-area{
 		margin-left: 15px;
 		padding-left: 17px;
 		border-left: 1px dotted rgba(0,0,0,0.1);
+	}
+
+	.comment-body, .attachments{
+		overflow: hidden;
+	}
+
+	.open-comments{
+		display: none;
+		float: left;
+		margin-top: 2px;
+		margin-right: 10px;
+		padding: 2px 7px 3px 7px;
+		font-size: 8pt;
+		background: #dee5eb;
+		color: #6A7989;
+		border-radius: 2px;
+	}
+
+	&.short-version{
+		.comment-body{
+			max-height: 18px;
+		}
+		.attachments{
+			display: none;
+		}
+		&>.comment-area>.open-comments{
+			display: inline-block;
+		}
+		&:before{
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 35px;
+			height: 18px;
+			width: 100%;
+			z-index: 1;
+			background: -moz-linear-gradient(top,  rgba(255,255,255,0) 0%, rgba(255,255,255,1) 70%, rgba(255,255,255,1) 100%);
+			background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0)), color-stop(70%,rgba(255,255,255,1)), color-stop(100%,rgba(255,255,255,1)));
+			background: -webkit-linear-gradient(top,  rgba(255,255,255,0) 0%,rgba(255,255,255,1) 70%,rgba(255,255,255,1) 100%);
+			background: -o-linear-gradient(top,  rgba(255,255,255,0) 0%,rgba(255,255,255,1) 70%,rgba(255,255,255,1) 100%);
+			background: -ms-linear-gradient(top,  rgba(255,255,255,0) 0%,rgba(255,255,255,1) 70%,rgba(255,255,255,1) 100%);
+			background: linear-gradient(to bottom,  rgba(255,255,255,0) 0%,rgba(255,255,255,1) 70%,rgba(255,255,255,1) 100%);
+			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00ffffff', endColorstr='#ffffff',GradientType=0 );
+		}
+
+		&.short-version-just-attachments{
+			.comment-body{
+				display: none;
+				max-height: 18px;
+			}
+			.attachments{
+				display: block;
+				max-height: 18px;
+			}
+		}
 	}
 }
 
@@ -167,6 +232,7 @@ section.post-area{
 	margin-right: auto;
 
 	background-color: #DEE5EB;
+	z-index: 1;
 
 	&.active{
 		.action-panel{

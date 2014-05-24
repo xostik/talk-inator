@@ -6,9 +6,12 @@ define(['underscore', 'backbone', 'aspic'], function( _, Backbone ){
      * */
 
     var Post = Backbone.AspicModel.extend({
-        initialize: function () {
+        initialize: function (attr, params) {
+            this.set('user', params.user);
 
-
+            if(!this.attachments){
+                this.set('attachments', -1);
+            }
         }
     })
 

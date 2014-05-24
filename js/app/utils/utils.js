@@ -79,6 +79,38 @@ define(['underscore'], function(_){
         }
     });
 
+    // быстрое вычисление высоты
+    (function ($) {
+        $(document).ready(function(){
+            var clientSizeSupport = $('body').get(0).clientHeight !== undefined && window.getComputedStyle !== undefined;
+
+            $.fn.qHeight = function ()
+            {
+                return clientSizeSupport ?
+                    this.get(0).clientHeight - window.getComputedStyle(this.get(0), null).getPropertyValue('padding-top').replace('px', '') - window.getComputedStyle(this.get(0), null).getPropertyValue('padding-bottom').replace('px', '') :
+                    this.height();
+            }
+            $.fn.qWidth = function ()
+            {
+                return clientSizeSupport ?
+                    this.get(0).clientWidth - window.getComputedStyle(this.get(0), null).getPropertyValue('padding-right').replace('px', '') - window.getComputedStyle(this.get(0), null).getPropertyValue('padding-left').replace('px', ''):
+                    this.width();
+            }
+            $.fn.qInnerHeight = function ()
+            {
+                return clientSizeSupport ?
+                    this.get(0).clientHeight :
+                    this.innerHeight();
+            }
+            $.fn.qInnerWidth = function ()
+            {
+                return clientSizeSupport ?
+                    this.get(0).clientWidth :
+                    this.innerWidth();
+            }
+        });
+    })(jQuery);
+
     /*
      Color animation 1.6.0
      http://www.bitstorm.org/jquery/color-animation/
@@ -91,4 +123,33 @@ define(['underscore'], function(_){
         a.run=function(a){d.each(c,function(d,c){b[c]=h(e[c],g,a)})}}};var l={aqua:[0,255,255,1],azure:[240,255,255,1],beige:[245,245,220,1],black:[0,0,0,1],blue:[0,0,255,1],brown:[165,42,42,1],cyan:[0,255,255,1],darkblue:[0,0,139,1],darkcyan:[0,139,139,1],darkgrey:[169,169,169,1],darkgreen:[0,100,0,1],darkkhaki:[189,183,107,1],darkmagenta:[139,0,139,1],darkolivegreen:[85,107,47,1],darkorange:[255,140,0,1],darkorchid:[153,50,204,1],darkred:[139,0,0,1],darksalmon:[233,150,122,1],darkviolet:[148,0,211,1],fuchsia:[255,
         0,255,1],gold:[255,215,0,1],green:[0,128,0,1],indigo:[75,0,130,1],khaki:[240,230,140,1],lightblue:[173,216,230,1],lightcyan:[224,255,255,1],lightgreen:[144,238,144,1],lightgrey:[211,211,211,1],lightpink:[255,182,193,1],lightyellow:[255,255,224,1],lime:[0,255,0,1],magenta:[255,0,255,1],maroon:[128,0,0,1],navy:[0,0,128,1],olive:[128,128,0,1],orange:[255,165,0,1],pink:[255,192,203,1],purple:[128,0,128,1],violet:[128,0,128,1],red:[255,0,0,1],silver:[192,192,192,1],white:[255,255,255,1],yellow:[255,255,
         0,1],transparent:[255,255,255,0]}})(jQuery);
+
+
+    var $el;
+
+    $.speedTest = function(f){
+        var t = (new Date()).getTime();
+
+        $el = $('.comment-1297894');
+        if($el.length != 1){
+            console.log('wrong el finding: ' + $el.length);
+        }
+        for(var i = 0, ii = 10000; i<ii; i++){
+            f();
+        }
+
+        console.log((new Date()).getTime() - t);
+    }
+
+    $.jqHeight = function(){
+        return $el.height();
+    }
+
+    $.qHeight = function(){
+        return $el.qInnerHeight();
+    }
+
+    $.domRect = function(){
+        return $el.get(0).getBoundingClientRect();
+    }
 });

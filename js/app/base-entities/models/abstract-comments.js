@@ -1,4 +1,4 @@
-define(['backbone', 'aspic'], function( Backbone ){
+define(['jquery', 'backbone', 'aspic'], function( $, Backbone ){
 
     /*
     *   new AbstractComment({
@@ -10,16 +10,26 @@ define(['backbone', 'aspic'], function( Backbone ){
 
      var AbstractComment = Backbone.AspicModel.extend({
 
-        initialize: function (paraps, parent) {
+        initialize: function (params, options) {
+            var parent = options.parent || false;
             this.set({
                 /*
                 id, from_id, date, text
                 **/
+                user: options.user,
                 parent: parent,
                 answers: new Backbone.Collection()
             });
-        }
-    })
+
+            if(parent){
+                parent.answers().add(this);
+            }
+        },
+
+         hasText: function(){
+             return $.trim(this.text()) != '';
+         }
+     })
 
     return AbstractComment;
 });

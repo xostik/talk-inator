@@ -42,6 +42,7 @@ var require = {
             'common-layout':    'app/base-entities/layouts/common-layout',
 
             'empty-region':             'app/base-entities/models/empty-region',
+            'post':                     'app/base-entities/models/post',
             'abstract-comments':        'app/base-entities/models/abstract-comments',
             'vk-comments':              'app/base-entities/models/vk-comments',
             'comments-tree':            'app/base-entities/models/comments-tree',
@@ -52,6 +53,8 @@ var require = {
             'footer-region-view':   'app/base-entities/regions/footer-region',
             'start-region-view':    'app/base-entities/regions/start-region',
             'talk-region-view':     'app/base-entities/regions/talk-region',
+
+            'talk-items-views':     'app/base-entities/regions/talk-items',
 
             'user':         'app/user/user',         //  работа с пользователями
             'user-models':  'app/user/user-models',  //  модели пользователей
@@ -90,6 +93,7 @@ var require = {
         'header-region.tpl':    'text!/js/app/base-entities/templates/header-region.tpl.html',
         'footer-region.tpl':    'text!/js/app/base-entities/templates/footer-region.tpl.html',
         'comment.tpl':          'text!/js/app/base-entities/templates/comment.tpl.html',
+        'post.tpl':             'text!/js/app/base-entities/templates/post.tpl.html',
         'ship-region.tpl':      'text!/js/app/base-entities/templates/ship-region.tpl.html',
         'map-region.tpl':       'text!/js/app/base-entities/templates/map-region.tpl.html'
 

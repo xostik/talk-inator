@@ -59,7 +59,6 @@ Backbone.AspicView = Backbone.View.extend({
                 
     bindWithField: function (selector, directives) {
         var $els = this.$el.find(selector);
-                    
         if (directives.withProperty) {
             var eventTypes = 'change';
             if ($els.is('input,textarea,select')) {

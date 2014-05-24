@@ -1,6 +1,7 @@
 define([
     'common-layout',
     'vk-talk-loader',
+    'talk-region',
     'talk-region-view',
     'empty-region',
     'header-region-view',
@@ -8,6 +9,7 @@ define([
     'layout-manager'
 ], function(
     CommonLayout,
+    talkRegionLoader,
     talkRegion,
     TalkRegionView,
     emptyRegion,

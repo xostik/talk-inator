@@ -3,7 +3,9 @@ define(['backbone', 'underscore', 'jquery', 'user-tasks', 'async-data-models', '
     var OtherUser = Models.AsyncDataModel.extend({
             initialize: function () {
                 this.set({
-                    pic: -1
+                    pic: -1,
+                    dat_first_name: -1,
+                    dat_last_name: -1
                 });
 
                 Models.AsyncDataModel.prototype.initialize.apply(this, arguments);
@@ -15,12 +17,20 @@ define(['backbone', 'underscore', 'jquery', 'user-tasks', 'async-data-models', '
                 Models.AsyncDataModel.prototype._handlingData.apply(this, arguments);
             },
 
+            fullName: function(){
+                return this.last_name() + ' ' + this.first_name();
+            },
+
             type: function(){
                 return 'user';
             }
         }),
 
         PublicPage = OtherUser.extend({
+            fullName: function(){
+                return this.name();
+            },
+
             type: function(){
                 return 'public';
             }

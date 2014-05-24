@@ -1,4 +1,4 @@
-define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePaths['talk-region.tpl'], 'router', 'utils'], function(Region, _, user, talkItemsViews, tpl, router){
+define(['abstract-region', 'underscore', 'user', requirePaths['talk-region.tpl'], requirePaths['comment.tpl'], 'router', 'utils'], function(Region, _, user, tpl, commentTpl, router){
     var TalkRegion = Region.extend({
         tagName: 'div',
 
@@ -7,62 +7,63 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
         template: _.template(tpl),
 
         templates: {
+            comment: _.template(commentTpl),
+            photoAttachment: _.template('<a class="img-wrap preview" href="javascript:;" data-preview-url="<%= photo_130 %>" data-origin-url="<%= photo_604 %>"><img src="<%= photo_130 %>" /></a>'),
+            videoAttachment: _.template('<a class="video-wrap preview" href="javascript:;" data-id="<%= id %>" data-owner-id="<%= owner_id %>" data-key="<%= access_key %>" data-content="<%= title %>"><img src="<%= photo_320 %>" /></a>'),
+            docAttachment: _.template('<a class="doc-wrap preview" href="javascript:;" data-preview-url="<%= photo_130 %>" data-origin-url="<%= url %>"><img src="<%= photo_130 %>" /></a>'),
+            audioAttachment: _.template('<a href="<%= url %>" target="_blank" class="audio-wrap" data-content="(♪)"><%= artist %> &ndash; <%= title %></a>'),
+            linkAttachment: _.template('<a href="<%= url %>" target="_blank" class="link-wrap"><h2 class="link-title" data-content="Ссылка" data-link="<%= url %>"><%= title %></h2> <p class="link-body"><%= description %></p></a>'),
+            pageAttachment: _.template('<a href="<%= view_url %>" target="_blank" class="page-wrap"><h2 class="page-title" data-content="Страница"><%= title %></h2></a>'),
+
             videoPlayer: _.template('<iframe width="720" height="410" border="0" src="<%= player %>"></iframe>')
         },
 
         htmlCache: {
             $html: $('html'),
-            $window: $(window),
             $talkArea: undefined
-        },
-
-        windowSize: {},
-
-        views: {
-            post: undefined,
-            comments: {} // cid: commentView
         },
 
         events:{
             'click .video-wrap': 'playVideo',
             'click .doc-wrap': 'togglePict',
             'click a.img-wrap': 'togglePict',
-
             'click .reply-comment': 'startReplyComment',
             'click .cancel-reply-subject': 'closeAnswer',
             'click .comment-post': 'startComment',
             'focusin .answer-text': 'focusAnswer',
             'blur-of-answer .answer-area': 'blurOfAnswerHandler',
-            'click .send': 'onCommentSend',
-            'click .open-comments': 'openShortComments',
-
-            'click #receiver': 'handleOuterMessage'
+            'click .send': 'onCommentSend'
         },
 
         initialize: function(){
             var _this = this;
 
-            this.refreshWindowSize();
-
             this.initHandlers();
         },
 
         initHandlers: function(){
-            var _this = this,
-                postReadyActions = _.bind(this.postReadyActions, this),
-                newCommentAction = _.bind(this.newCommentAction, this),
-                refreshWindowSize = _.bind(this.refreshWindowSize, this);
+            var _this = this;
 
-            this.model.onPostReady(postReadyActions);
-            this.model.onCommentReady(newCommentAction);
-            this.htmlCache.$window.resize(refreshWindowSize);
-        },
+            this.model.handlers().onPostReady
+                .add(function(r){
+                    $('div.post-area')
+                        .html(r.text)
+                    .siblings('.likes')
+                        .text(r.likes.count);
 
-        refreshWindowSize: function(){
-            var $w = this.htmlCache.$window;
+                    if(r.attachments){
+                        _this.addAttachments($('section.post-area'), r.attachments);
+                    }
+                });
 
-            this.windowSize.height = $w.height();
-            this.windowSize.width = $w.width();
+            this.model.comments().onAddComment(this.handleNewComment);
+
+            this.model.handlers().onUsersListReady
+                .add(function(r){
+                    for(var i = 0, ii = r.length; i < ii; i++){
+                        _this.handleNewUser(r[i]);
+                    }
+                });
         },
 
         showNotAuthMessage: function(){
@@ -75,144 +76,6 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
 
         destroy: function(){
             this.$el.off();
-        },
-
-        postReadyActions: function(post){
-            var postView = new talkItemsViews.PostView({model: post});
-            this.$el.find('#post-area-wrap')
-                .html( postView.render() );
-
-            this.views.post = postView;
-        },
-
-        newCommentAction: function(comment){
-            var placementOfComment, view;
-
-            if(this.model.isAllVkCommentsReady()){
-                if(user.getCurrentUser().mid() == comment.from_id()){
-                    this.insertComment(comment);
-                    this.centeredWindowByComment(comment);
-                    return;
-                }
-
-                placementOfComment = this.placementOfComment(comment);
-                if(placementOfComment < 0){
-                    this.insertComment(comment);
-                }else{
-                    if(placementOfComment > 0){
-                        view = this.insertComment(comment);
-                        this.offsetWindowOnComment(view);
-                    }else{
-                        if(comment.hasText()){
-                            this.insertComment(comment, 'short-version');
-                        }else{
-                            this.insertComment(comment, 'short-version-just-attachments');
-                        }
-                    }
-                }
-            }else{
-                 this.insertComment(comment);
-            }
-        },
-
-        insertComment: function(comment, shortVersion){
-            var commentView = new talkItemsViews.CommentView({model: comment}, {shortVersion: shortVersion}),
-                renderResult = commentView.render(),
-                parentView;
-
-            if(shortVersion){
-                renderResult.css('display', 'none');
-            }
-
-            if(comment.parent()){
-                parentView = this.views.comments[comment.parent().id];
-                parentView.appendAnswer(renderResult);
-            }else{
-                this.htmlCache.$talkArea
-                    .append(renderResult);
-            }
-
-            if(shortVersion){
-                renderResult.slideDown();
-            }
-
-            this.views.comments[comment.id] = commentView;
-
-            return commentView;
-        },
-
-        centeredWindowByComment: function(comment){
-            var $view = this.views.comments[comment.id].$el,
-                $w = this.htmlCache.$window,
-                scrollTop = $w.scrollTop(),
-                elH = $view.qInnerHeight(),
-                elRect = $view.get(0).getBoundingClientRect(),
-                diff = (this.windowSize.height - elH)/2;
-
-            if( diff < 200 ){
-                diff = 200;
-            }
-
-            $w.scrollTop(scrollTop + elRect.top - diff);
-
-            this.accentElements($view);
-        },
-
-        placementOfComment: function(comment){
-            var parent = comment.parent(),
-                siblings, prevEl, prevElView, elRect;
-
-            if(parent){
-                siblings = parent.answers();
-                if(siblings.length == 1){
-                    prevEl = parent;
-                }else{
-                    prevEl = siblings.last(2)[0];
-                }
-            }else{
-                if(this.model.vk().comments.count() == 1){
-                    return 0;
-                }else{
-                    prevEl = this.model.vk().comments.firstLevel().last(2)[0];
-                }
-            }
-
-            prevElView = this.views.comments[prevEl.id];
-            elRect = prevElView.$el.get(0).getBoundingClientRect();
-
-            if(elRect.bottom < 0){
-                return 1;
-            }
-            if(elRect.top > this.windowSize.height){
-                return -1;
-            }
-            return 0;
-        },
-
-        offsetWindowOnComment: function(commentView){
-            var h = commentView.$el.qInnerHeight(),
-                $w = this.htmlCache.$window;
-            $w.scrollTop($w.scrollTop() + h);
-        },
-
-        openShortComments: function(e){
-            var $el = $(e.target).parent(),
-                topPostion = $el.get(0).getBoundingClientRect().top,
-                $allShortComments = this.$el.find('.short-version'),
-                $w = this.htmlCache.$window,
-                positionDiff;
-
-            $allShortComments
-                .removeClass('short-version short-version-just-attachments');
-            this.accentElements($allShortComments);
-
-            positionDiff = $el.get(0).getBoundingClientRect().top - topPostion;
-            $w.scrollTop($w.scrollTop() + positionDiff);
-        },
-
-        accentElements: function($el){
-            $el.css({backgroundColor: 'rgba(255, 223, 0, 0.2)'})
-                .animate({backgroundColor: 'rgba(255, 223, 0, 0)'}, {duration: 3000});
         },
 
         handleNewComment: function(comment){
@@ -275,7 +138,7 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
             }
         },
 
-        insertComment2: function($comment, $parent, isNotReadedComment){
+        insertComment: function($comment, $parent, isNotReadedComment){
             var $notOpenAnswersOuter;
 
             if(isNotReadedComment){
@@ -471,10 +334,8 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
                 $el = $(e.currentTarget),
                 $comment = $el.parents('.comment-i'),
                 dt = $comment.data(),
-                user = this.model.vk().users[dt.from_id];
-
-            _this.startReplyCommentAction(user, dt.comment_id, dt.from_id);
-            /*if(user.dat_first_name() != -1){
+                user = this.model.userCache()[dt.from_id];
+            if(user.dat_first_name()){
                 _this.startReplyCommentAction(user, dt.comment_id, dt.from_id);
             }else{
                 VK.Api.call('users.get', {
@@ -486,21 +347,21 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
                     user.dat_last_name( r.response[0].last_name );
                     _this.startReplyCommentAction(user, dt.comment_id, dt.from_id);
                 });
-            }*/
+            }
         },
 
         startComment: function(){
-            this.cancelReplyComment();
             this.openAnswer();
         },
 
         startReplyCommentAction: function(user, comment_id, from_id){
             this.openAnswer();
+
             $('.action-panel .reply-subject .val')
-                //.text(user.dat_first_name())
-                //.attr('data-dat-first-name', user.dat_first_name())
-                //.attr('data-dat-last-name', user.dat_last_name())
-                .attr('data-nom-first-name', user.first_name())
+                .text(user.dat_first_name)
+                .attr('data-dat-first-name', user.dat_first_name)
+                .attr('data-dat-last-name', user.dat_last_name)
+                .attr('data-nom-first-name', user.first_name)
                 .attr('data-subject-cid', comment_id)
                 .attr('data-subject-uid', from_id);
         },
@@ -530,14 +391,14 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
             if(!this.isInVk()){
                 $('.answer-area textarea').blur();
                 this.showAttention('Оставлять комментарии можно только после установки нашего приложения для браузера google chrome. Это связано с тем, что Вконтакте не позволяет оставлять комментарии с других сайтов.');
-            }else{  /*
+            }else{
                 if(!$('.answer-area').hasClass('active')){
                     $('.answer-area')
                         .addClass('active')
                         .find('textarea')
                         .focus();
                     this.startWatchBlurOfAnswer();
-                }           */
+                }
             }
         },
 
@@ -567,7 +428,7 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
         },
 
         onCommentSend: function(){
-            this.model.vk().talkLoader.forceCommentUpdate(700);
+            this.model.forceCommentUpdate(700);
         },
 
         render: function(){
@@ -577,7 +438,7 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
 
             this.htmlCache.$talkArea = this.$el.find('.talk-area');
 
-            user.getCurrentUser().whenReady(function(u){
+            this.model.user().whenReady(function(u){
                 if(u.isAuth()){
                     _this.hideNotAuthMessage();
                 }else{
@@ -598,11 +459,6 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
 
         isInVk: function(){
              return location.hash.length > 0;
-        },
-
-        handleOuterMessage: function(e){
-            var message = JSON.parse($(e.currentTarget).attr('data-message'));
-            console.log(message);
         }
 
     });

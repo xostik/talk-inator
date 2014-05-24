@@ -26,24 +26,50 @@ define(['jquery', 'backbone', 'aspic'], function( $, Backbone ){
         },
 
         addComment: function(comment){
-            var parent = comment.parent();
+            if(this.isExist(comment.id)){
+                throw 'CommentsTree: trying to add existing comment';
+            }
+
+            var parent = comment.parent(),
                 childList;
             if(parent){
-                childList = this.indexByPid[parent.id()]
+                childList = this.indexByPid[parent.id]
                 if(!childList){
                     childList = [];
-                    this.indexByPid[parent.id()] = childList;
+                    this.indexByPid[parent.id] = childList;
                 }
                 childList.push(comment);
             }else{
-                firstLevel.add(comment);
+                this.firstLevel().add(comment);
             }
 
-            this.indexById()[comment.id()] = comment;
+            this.indexById()[comment.id] = comment;
 
-            count++;
+            this.count(this.count() + 1);
 
-            this.handlers.onAddComment(comment);
+            this.handlers().onAddComment
+                .fire(comment);
+        },
+
+        updateComment: function(id, obj){
+            this.indexById()[id].set(obj);
+        },
+
+        getById: function(id){
+            return this.indexById()[id];
+        },
+
+        parentFor: function(id){
+            return this.indexByPid()[id];
+        },
+
+        isExist: function(id){
+            return !! this.indexById()[id];
+        },
+
+        onAddComment: function(handler){
+            this.handlers().onAddComment
+                .add(handler);
         }
     });
 
