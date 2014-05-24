@@ -24,7 +24,7 @@ function getPath() {
 function getDetails(s) {
     var tmp = s.split('_');
     return {
-        wallId: tmp[0],
+        wallId: tmp[0].substr(4),
         topicId: tmp[1]
     };
 }
@@ -48,17 +48,22 @@ function sendMessage(message) {
 // ------------------------------
 
 function initHandlers() {
-    /*$('body').on('click', '.comment-i', function (e) {
-        sendMessage({
-            cid: $(this).data('cid'),
-            uid: $(this).data('uid'),
-            wallId: qDetails.wallId,
-            topicId: qDetails.topicId
-        });
-        e.stopPropagation();
-    });*/
+    chrome.runtime.onMessage.addListener(
+        function (request, sender, sendResponse) {
+            if (request.type == 'toDiscusSide' && vk_pid == request.pid) {
+                handleMessageFromVK(request.message);
+            }
+        }
+    );
 
     setTimeout(function () {
+		if (vk_pid != ''){
+			$(document).on('click', '.comment-post, .reply-comment', function(){
+				setTimeout( commentMode, 50 );
+			});
+		
+		}
+
         $('.action-panel .send').click(function () {
             var $wrap = $(this).parents('.answer-area'),
                 $reply = $wrap.find('.reply-subject .val'),
@@ -92,5 +97,46 @@ function initHandlers() {
             }
         });
     }, 700);
+}
 
+// ------------------------------
+
+function commentMode(){
+	var $wrap = $('.answer-area'),
+		$reply = $wrap.find('.reply-subject .val'),
+		replyUID = $reply.attr('data-subject-uid'),
+		replyCID = $reply.attr('data-subject-cid'),
+		replyUserDatFirstName = $reply.attr('data-dat-first-name'),
+		replyUserDatLastName = $reply.attr('data-dat-last-name'),
+		replyUserNomFirstName = $reply.attr('data-nom-first-name'),
+		tx = $wrap.find('.answer-text').val(),
+		message = {
+			text: tx,
+			wallId: qDetails.wallId,
+			topicId: qDetails.topicId
+		};
+	
+
+	if (replyUID) {
+		message.cid = replyCID;
+		message.uid = replyUID;
+		message.names = {
+			dat: {
+				first_name: replyUserDatFirstName,
+				last_name: replyUserDatLastName
+			},
+			nom: {
+				first_name: replyUserNomFirstName
+			}
+		};
+	}
+	sendMessage(message);
+}
+
+// ------------------------------
+
+function handleMessageFromVK(message){
+	$('#receiver')
+		.attr('data-message', JSON.stringify(message))
+		.click();
 }
