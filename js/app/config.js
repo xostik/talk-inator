@@ -68,7 +68,7 @@ var require = {
 
 
             // СТОРОННИЕ СКРИПТЫ
-            'jquery':               'http://code.jquery.com/jquery-1.10.2.min',
+            'jquery':               'https://code.jquery.com/jquery-1.10.2.min',
             'text':                 'lib/require/text.require',
             'underscore':           'lib/underscore/underscore',
             'backbone':             'lib/backbone/backbone',
@@ -79,7 +79,7 @@ var require = {
         },
 
 
-        urlArgs: 'bust=' + (new Date()).getTime()
+        urlArgs: 'bust=' // + (new Date()).getTime()
     },
 
 
@@ -102,5 +102,7 @@ var require = {
     config = {
         COMMENT_REQUEST_PERIOD: 400,
         MIN_REQUEST_PERIOD: 400,
-        PING_NEW_COMMENT_PERIOD: 5000
+        PING_NEW_COMMENT_PERIOD: 5000,
+        PING_NEW_COMMENT_PERIOD_FOR_UNACTIVE_USER: 60000,
+        UNACTIVE_USER_PERIOD: 60000
     };

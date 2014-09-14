@@ -23,6 +23,13 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
             comments: {} // cid: commentView
         },
 
+        /*
+         * поле в котором хранится id последнего комментария от текущего пользователя,
+         * с момента последней попытки сделать ответ. Нужно для подсветки и центрирования комента пользователя
+         * при возвращении из вк в талкинатор
+         */
+        lastUserCommentAfterLastReply: null,
+
         events:{
             'click .video-wrap': 'playVideo',
             'click .doc-wrap': 'togglePict',
@@ -40,22 +47,16 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
         },
 
         initialize: function(){
-            var _this = this;
-
             this.refreshWindowSize();
-
             this.initHandlers();
         },
 
         initHandlers: function(){
-            var _this = this,
-                postReadyActions = _.bind(this.postReadyActions, this),
-                newCommentAction = _.bind(this.newCommentAction, this),
-                refreshWindowSize = _.bind(this.refreshWindowSize, this);
-
-            this.model.onPostReady(postReadyActions);
-            this.model.onCommentReady(newCommentAction);
+            var refreshWindowSize = _.bind(this.refreshWindowSize, this);
             this.htmlCache.$window.resize(refreshWindowSize);
+
+            this.listenTo(this.model, 'postIsReady', this.postReadyActions);
+            this.listenTo(this.model, 'vkCommentIsReady', this.newVkCommentReadyAction);
         },
 
         refreshWindowSize: function(){
@@ -85,13 +86,15 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
             this.views.post = postView;
         },
 
-        newCommentAction: function(comment){
+        newVkCommentReadyAction: function(comment){
             var placementOfComment, view;
-
+            this.checkLastUserCommentAfterLastReply(comment);
             if(this.model.isAllVkCommentsReady()){
+                this.checkLastUserCommentAfterLastReply(comment);
+
                 if(user.getCurrentUser().mid() == comment.from_id()){
                     this.insertComment(comment);
-                    this.centeredWindowByComment(comment);
+                    //this.centeredWindowByComment(comment);
                     return;
                 }
 
@@ -214,8 +217,9 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
             $el.css({backgroundColor: 'rgba(255, 223, 0, 0.2)'})
                 .animate({backgroundColor: 'rgba(255, 223, 0, 0)'}, {duration: 3000});
         },
-
+/*
         handleNewComment: function(comment){
+            debugger; // Это еще работает?!
             var $comment = this.buildComment(comment),
                 $parent, $notOpenAnswers;
             /*if(commentObj.reply_to_comment){
@@ -246,7 +250,7 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
             // внутри - добавляем в not-open область
 
 
-            if(this.model.handlers().onAllCommentsReady.state() != 'resolved'){
+            /*if(this.model.handlers().onAllCommentsReady.state() != 'resolved'){
                 if(comment.reply_to_comment){
                     $parent = $('.talk-area .comment-' + comment.reply_to_comment + '>.answers');
                 }
@@ -267,6 +271,7 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
         },
 
         quickInsertComment: function($comment, $parent){
+            debugger; // Это еще работает?!
             if(!$parent){
                 this.htmlCache.$talkArea
                     .append($comment);
@@ -276,6 +281,7 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
         },
 
         insertComment2: function($comment, $parent, isNotReadedComment){
+            debugger; // Это еще работает?!
             var $notOpenAnswersOuter;
 
             if(isNotReadedComment){
@@ -434,7 +440,7 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
                     .show();
             }
         },
-
+    */
         playVideo: function(e){
             var _this = this,
                 $el = $(e.currentTarget),
@@ -467,14 +473,18 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
         },
 
         startReplyComment: function(e){
+            this.clearLastUserCommentAfterLastReply();
+
             var _this = this,
                 $el = $(e.currentTarget),
                 $comment = $el.parents('.comment-i'),
                 dt = $comment.data(),
                 user = this.model.vk().users[dt.from_id];
 
-            _this.startReplyCommentAction(user, dt.comment_id, dt.from_id);
-            /*if(user.dat_first_name() != -1){
+            //_this.startReplyCommentAction(user, dt.comment_id, dt.from_id);
+
+            if(user.dat_first_name() != -1){
+
                 _this.startReplyCommentAction(user, dt.comment_id, dt.from_id);
             }else{
                 VK.Api.call('users.get', {
@@ -482,27 +492,43 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
                     name_case: 'dat',
                     v: 5.21
                 }, function(r){
+
                     user.dat_first_name( r.response[0].first_name );
                     user.dat_last_name( r.response[0].last_name );
                     _this.startReplyCommentAction(user, dt.comment_id, dt.from_id);
                 });
-            }*/
+            }
         },
 
         startComment: function(){
+            this.clearLastUserCommentAfterLastReply();
+
             this.cancelReplyComment();
             this.openAnswer();
         },
 
         startReplyCommentAction: function(user, comment_id, from_id){
+            var commentData = {
+                datFirstName: user.dat_first_name(),
+                datLastName: user.dat_last_name(),
+                nomFirstName: user.first_name(),
+                subjectCid: comment_id,
+                subjectUid: from_id
+            };
+
+            $('#receiver')
+                .attr('data-message', JSON.stringify(commentData))
+            .get(0)
+                .click();
             this.openAnswer();
-            $('.action-panel .reply-subject .val')
-                //.text(user.dat_first_name())
-                //.attr('data-dat-first-name', user.dat_first_name())
-                //.attr('data-dat-last-name', user.dat_last_name())
+            /*$('.action-panel .reply-subject .val')
+                .text(user.dat_first_name())
+                .attr('data-dat-first-name', user.dat_first_name())
+                .attr('data-dat-last-name', user.dat_last_name())
                 .attr('data-nom-first-name', user.first_name())
                 .attr('data-subject-cid', comment_id)
-                .attr('data-subject-uid', from_id);
+                .attr('data-subject-uid', from_id);*/
+
         },
 
         cancelReplyComment: function(){
@@ -603,6 +629,24 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
         handleOuterMessage: function(e){
             var message = JSON.parse($(e.currentTarget).attr('data-message'));
             console.log(message);
+        },
+
+        clearLastUserCommentAfterLastReply: function(){
+            this.lastUserCommentAfterLastReply = null;
+        },
+
+        setLastUserCommentAfterLastReply: function(comment){
+            this.lastUserCommentAfterLastReply = comment;
+        },
+
+        getLastUserCommentAfterLastReply: function(){
+            return this.lastUserCommentAfterLastReply;
+        },
+
+        checkLastUserCommentAfterLastReply: function(comment){
+            if(user.getCurrentUser().mid() == comment.from_id()){
+                this.setLastUserCommentAfterLastReply( comment.id );
+            }
         }
 
     });

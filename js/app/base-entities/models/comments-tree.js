@@ -18,10 +18,7 @@ define(['jquery', 'backbone', 'aspic'], function( $, Backbone ){
                 count: 0,
                 firstLevel: new Backbone.Collection(),
                 indexById: {},
-                indexByPid: {},
-                handlers: {
-                    onAddComment: $.Callbacks()
-                }
+                indexByPid: {}
             });
         },
 
@@ -47,8 +44,7 @@ define(['jquery', 'backbone', 'aspic'], function( $, Backbone ){
 
             this.count(this.count() + 1);
 
-            this.handlers().onAddComment
-                .fire(comment);
+            this.trigger('commentIsAdd', comment);
         },
 
         updateComment: function(id, obj){
@@ -65,11 +61,6 @@ define(['jquery', 'backbone', 'aspic'], function( $, Backbone ){
 
         isExist: function(id){
             return !! this.indexById()[id];
-        },
-
-        onAddComment: function(handler){
-            this.handlers().onAddComment
-                .add(handler);
         }
     });
 

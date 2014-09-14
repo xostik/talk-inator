@@ -1,23 +1,5 @@
-/*
-*
-* talk-region = {
-*   post
-*   vk:{
-*       talk-loader
-*       comment-tree
-*       is-active
-*   }
-*   talkinator: {
-*       talk-loader
-*       comment-tree
-*       is-active
-*   }
-*   active: vk
-* }
-*
-* */
-
 define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'vk-comments', 'comments-tree', 'post', 'aspic'], function( _, Backbone, $, user, UserModels, VK_Comment, CommentsTree, Post ){
+
     var VK_TalkLoader = Backbone.AspicModel.extend({
         initialize: function () {
             var _this = this;
@@ -28,8 +10,6 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'vk-comments'
                 post: -1,
                 pingInterval: -1,
                 handlers: {
-                    onPostReady: $.Callbacks(),
-                    onCommentsListReady: $.Callbacks(),
                     onUsersListReady: $.Callbacks(),
                     onAllCommentsReady: $.Deferred()
                 },
@@ -87,7 +67,7 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'vk-comments'
         // ------------------
 
         _postReadyHandler: function(postObj){
-            this.handlers().onPostReady.fire(postObj);
+            this.trigger('postIsReady', postObj);
         },
 
         // ------------------
@@ -169,14 +149,7 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'vk-comments'
             this.lastCommentCount(response.count);
 
             for (var i = 0, ii = response.items.length; i < ii; i++) {
-                newComment = this._handleComment(response.items[i]);
-                if(newComment){
-                    newCommentsList.push(newComment);
-                }
-            }
-
-            if(newCommentsList.length > 0){
-                this.handlers().onCommentsListReady.fire(newCommentsList);
+                this._handleComment(response.items[i]);
             }
 
             if(!this.usersDataRequestInQueue()){
