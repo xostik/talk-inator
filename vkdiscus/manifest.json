@@ -30,7 +30,7 @@
 		"all_frames": true
     },{
         "matches": [
-            "http://talk.ru/*"
+            "https://talk.ru/*"
         ],
         "js": [
 			"jquery.js",

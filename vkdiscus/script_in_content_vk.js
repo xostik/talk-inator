@@ -1,7 +1,29 @@
 ﻿var pid = Math.round(Math.random() * 100000),
     tunelObject = $.Callbacks(),
     lastMeaasageTime = (new Date).getTime(),
-    $popup;
+    isPopupMinimized = false,
+    $window = $(window),
+    $doc = $(document),
+    $popup,
+
+    styleHTML =
+        '<style>' +
+            '.discus_btn{display:none; position: absolute; top: -8px; left: -132px; width:16px; height:25px; background:url(https://talk.ru/i/talk-icn.png) 0 0 no-repeat;} ' +
+            '.talkinator-tab{position: fixed; top: 50%; left: 50%; margin-top: -23px; margin-left: 388px; width: 100px; padding:10px 0 11px 0; background: rgba(0, 0, 0, 0.7); text-align: center; color: #ddd; text-shadow: 0px 1px 0px #262626; border-radius: 6px; opacity:0.99; cursor: pointer;} ' +
+            '.talkinator-tab:after{content: ""; position: absolute; top: 18px; left: -6px; border-right:6px solid rgba(0, 0, 0, 0.7); border-top:6px solid transparent; border-bottom:6px solid transparent;} ' +
+            '.bottom-align{position: absolute; bottom: 0; right: -332px; top: auto; left: auto; margin-top:0; } ' +
+            '.top-align{position: absolute; top: 0; right: -332px; left: auto; margin-top:0;} ' +
+            '.wide_wall_module .top-align, .wide_wall_module .bottom-align{right: -132px;} ' +
+            '.wide_wall_module .discus_btn{left:-262px} ' +
+            '.post:hover .discus_btn{display:block;} ' +
+            '.toggle-talkinator:before{content:""; position:absolute; width:10px; height:0px; border: 1px solid white; top: 13px; left: 9px; border-radius: 2px;} ' +
+            '.minimized .toggle-talkinator:before{content:""; position:absolute; width:10px; height:10px; border: 2px solid white; top: 7px; left: 8px; border-radius: 2px;} ' +
+        '</style>',
+    openTalkinatorIconHtml = '<a class="discus_btn discus_handled_btn bhb-<%= postId%>" data-post-id="<%= postId%>" href="javascript:;" title="Открыть дискуссию в талкинаторе"></a>',
+    tabHTML =
+        '<div class="talkinator-tab" data-post-id = "<%= postId%>">' +
+            'Вернуться к дискуссии' +
+        '</div>';
 
 init(); 
 
@@ -42,7 +64,7 @@ function sendMessageToDiscus(message) {
 
 function initHelperButtons() {
     $('head')
-        .append('<style>.discus_btn{display:none; position: absolute; top: -8px; left: -132px; width:16px; height:25px; background:url(http://talk.ru/i/talk-icn.png) 0 0 no-repeat;} .wide_wall_module .discus_btn{left:-262px} .post:hover .discus_btn{display:block;} .toggle-talkinator:before{content:""; position:absolute; width:10px; height:0px; border: 1px solid white; top: 13px; left: 9px; border-radius: 2px;} .minimized .toggle-talkinator:before{content:""; position:absolute; width:10px; height:10px; border: 2px solid white; top: 7px; left: 8px; border-radius: 2px;} </style>');
+        .append(styleHTML);
 
 	setInterval(function(){
 		getUnhandledPosts()
@@ -54,27 +76,28 @@ function initHelperButtons() {
 					.addClass('discus_handled');
 
 			    $('#post' + postId + ' .post_full_like_wrap')
-					.append('<a class="discus_btn discus_handled_btn bhb-' + postId + '" data-post-id="' + postId + '" href="javascript:;" title="Открыть дискуссию в талкинаторе"></a>');
-					//.prepend('<button class="discus_for_send_btn bfsb-' + postId +  '" style="position: absolute; top: 0px; right: 20px;">-1</button>');
+					.append(openTalkinatorIconHtml.replace(/<%= postId%>/g, postId));
 			});
 	}, 500);
 	
-	$(document).on('click', '.discus_handled_btn', function () {
+	$doc.on('click', '.discus_handled_btn', function () {
 	        var postId = $(this).data('post-id');
 	        openPopup(postId);
+            createTab($(this), postId);
 	    })
-        .on('click', '.close-talkinator', closePopup)
-		.on('click', '.toggle-talkinator', togglePopup);
+        .on('click', '.close-talkinator', function(){removeTab(); closePopup();})
+		.on('click', '.toggle-talkinator', togglePopup)
+        .on('click', '.talkinator-tab', maximizePopup)
+        .scroll(alignTab);
 
-	$(window).resize(adaptPopup);
-    //console.log(window);
-    //onclick="Wall.replyClick(' + "'" +'961253_387' + "'" +', 394, event, 191414339)"
+	$window.resize(alignTab);
+    $window.resize(adaptPopup);
 }
 
 
 // ------------------------------
 
-function creatPopup() {
+function createPopup() {
     var $ifr = $('<iframe frameborder="no" style="width: 100%; height:100%;" src="about:blank"></iframe>'),
 		$cls = $('<div class="close-talkinator" title="закрыть дискуссию" style="position:absolute; top:-5px; right:12px; -webkit-transform: scale(0.5); cursor: pointer; font-size: 20pt; line-height: 12pt; padding: 5px 5px 8px 5px; background: rgba(0,0,0,0.5); border-radius: 100px; color: white;">×</div>'),
 		$toggle = $('<div class="toggle-talkinator" title="свернуть/развернуть дискуссию" style="position:absolute; top:-5px; right:32px; -webkit-transform: scale(0.5); cursor: pointer; font-size: 20pt; line-height: 12pt; padding: 5px 11px 8px 11px; background: rgba(0,0,0,0.5); border-radius: 100px;">&nbsp;</div>');
@@ -93,11 +116,11 @@ function creatPopup() {
 
 function openPopup(postId) {
     if (!$popup) {
-        creatPopup();
+        createPopup();
     }
 
     $popup.find('iframe')
-        .attr('src', 'http://talk.ru/wall' + postId + '#' + pid);
+        .attr('src', 'https://talk.ru/wall' + postId + '#' + pid);
     $popup.show();
     $('body').css('overflow', 'hidden');
     adaptPopup();
@@ -109,32 +132,52 @@ function minimizePopup(){
 	if($popup.hasClass('minimized')){
 		return;
 	}
+
+    var rect = $('.talkinator-tab').get(0).getBoundingClientRect(),
+        top = rect.top - rect.height/2.0;
+
 	$popup
-		.animate({height: 0}, 600)
-	.find('iframe')
-		.fadeOut('slow');
+		.animate({height: 0, opacity: 0, top: top}, 600)
+        .queue(function () {
+            $(this).hide();
+            $(this).dequeue();
+        });
+
 	setTimeout(function(){
 		$('body').css('overflow', 'auto');
 	}, 300);
 	$popup.addClass('minimized');
+
+    isPopupMinimized = true;
+    alignTab();
 }
 
 // ------------------------------
 
-function maximizePopup(){
+function maximizePopup(quiq, notHiddenOverflow){
 	if(!$popup.hasClass('minimized')){
 		return;
 	}
 	
-	var h = $(window).height() - 25; 
+	var h = $window.height() - 25,
+        time = (quiq === true) ? 0 : 600;
 	$popup
-		.animate({height: h}, 600)
-	.find('iframe')
-		.fadeIn('slow');
-	setTimeout(function(){
-		$('body').css('overflow', 'hidden');
-	}, 300);
+        .queue(function () {
+            if(!notHiddenOverflow){
+                $(this).show();
+            }
+            $(this).dequeue();
+        })
+        .animate({height: h, opacity: 1, top:0}, time);
+
+    if(!notHiddenOverflow){
+        setTimeout(function(){
+            $('body').css('overflow', 'hidden');
+        }, 300);
+    }
 	$popup.removeClass('minimized');
+
+    isPopupMinimized = false;
 }
 
 // ------------------------------
@@ -154,23 +197,87 @@ function closePopup() {
         .attr('src', 'about:blank');
     $popup.hide();
     $('body').css('overflow', 'auto');
+
+    removeTab();
+    maximizePopup(true, true);
 }
 
 // ------------------------------
 
 function adaptPopup() {
-    var $w = $(window),
-        w = $w.width(),
-        h = $w.height();
-    $popup
-        .height(h - 25)
-        .width(w - 10);
+    if($popup){
+        var $w = $window,
+            w = $w.width(),
+            h = $w.height();
+        $popup
+            .height(h - 25)
+            .width(w - 10);
+    }
+}
+
+// ------------------------------
+
+function createTab($talkinatorIcon, postId){
+    var $tab = $(tabHTML.replace('<%= postId%>', postId));
+    $('.talkinator-tab').remove();
+
+    $talkinatorIcon.parents('.post_table')
+        .append($tab);
+}
+
+// ------------------------------
+
+function removeTab(){
+    $('.talkinator-tab').remove();
 }
 
 // ------------------------------
 
 function getUnhandledPosts() {
     return $('#page_wall_posts .post_table, #feed_rows .post_table').not('.discus_handled');
+}
+
+// ------------------------------
+
+function alignTab(){
+    if(isPopupMinimized){
+        var $tab = $('.talkinator-tab'),
+            $post = $tab.parents('.post_table'),
+            tabRect = $tab.get(0).getBoundingClientRect(),
+            postRect = $post.get(0).getBoundingClientRect(),
+            windowH = $window.height();
+
+        if(postRect.top > windowH/2.0){
+            $tab.removeClass('bottom-align');
+            $tab.addClass('top-align');
+
+            checkDiscussionConditionality( windowH - postRect.top, $tab );
+        }else{
+            if(postRect.bottom < windowH/2.0){
+                $tab.removeClass('top-align');
+                $tab.addClass('bottom-align');
+
+                checkDiscussionConditionality( postRect.bottom, $tab );
+            }else{
+                $tab.removeClass('bottom-align');
+                $tab.removeClass('top-align');
+            }
+        }
+    }
+}
+
+// ------------------------------
+
+function checkDiscussionConditionality(postPieceInWindow, $tab){
+    if(postPieceInWindow < 0){
+        closePopup();
+    }else{
+        if(postPieceInWindow < 200){
+            $tab.css({opacity: postPieceInWindow/203.0});
+        }else{
+            $tab.css({opacity: 0.99});
+        }
+    }
 }
 
 // ------------------------------
@@ -219,6 +326,8 @@ function replyAction(wallId, topicId, cid, uid, userNames) {
         $btn.get(0).click();
         $btn.remove();
     }
+
+    answerFieldOnCenter(postId);
 }
 
 function commentPostAction(wallId, topicId) {
@@ -234,4 +343,20 @@ function answerAction(postId, text) {
     $('#reply_field' + postId).val(text);
 
     $('#reply_button' + postId).get(0).click();
+}
+
+// -------------------------------
+
+function answerFieldOnCenter(postId){
+     var $replyBox = $('#reply_box' + postId),
+         replyBoxRect = $replyBox.get(0).getBoundingClientRect(),
+         windowH = $window.height(),
+         scrollTopOld = $doc.scrollTop(),
+         offset = replyBoxRect.top - windowH/2.0 + 25,
+         scrollTop = scrollTopOld + offset;
+    //debugger;
+    setTimeout(function(){
+        //debugger;
+        $doc.scrollTop(scrollTop);
+    }, 70);
 }

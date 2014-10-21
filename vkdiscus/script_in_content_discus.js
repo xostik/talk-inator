@@ -57,14 +57,20 @@ function initHandlers() {
     );
 
     setTimeout(function () {
-		if (vk_pid != ''){
+		/*if (vk_pid != ''){
 			$(document).on('click', '.comment-post, .reply-comment', function(){
 				setTimeout( commentMode, 50 );
 			});
 		
-		}
+		}*/
+        $(document).on('click', '#receiver', function(){
+            var $el = $(this),
+                dt = JSON.parse( $el.attr('data-message') );
 
-        $('.action-panel .send').click(function () {
+            commentMode(dt);
+        });
+
+        /*$('.action-panel .send').click(function () {
             var $wrap = $(this).parents('.answer-area'),
                 $reply = $wrap.find('.reply-subject .val'),
                 replyUID = $reply.attr('data-subject-uid'),
@@ -95,13 +101,13 @@ function initHandlers() {
                 }
                 sendMessage(message);
             }
-        });
+        });*/
     }, 700);
 }
 
 // ------------------------------
 
-function commentMode(){
+function commentMode(data){
 	var $wrap = $('.answer-area'),
 		$reply = $wrap.find('.reply-subject .val'),
 		replyUID = $reply.attr('data-subject-uid'),
@@ -110,23 +116,24 @@ function commentMode(){
 		replyUserDatLastName = $reply.attr('data-dat-last-name'),
 		replyUserNomFirstName = $reply.attr('data-nom-first-name'),
 		tx = $wrap.find('.answer-text').val(),
+
 		message = {
-			text: tx,
+			text: '',
 			wallId: qDetails.wallId,
 			topicId: qDetails.topicId
 		};
 	
 
-	if (replyUID) {
-		message.cid = replyCID;
-		message.uid = replyUID;
+	if (data.subjectUid) {
+		message.cid = data.subjectCid;
+		message.uid = data.subjectUid;
 		message.names = {
 			dat: {
-				first_name: replyUserDatFirstName,
-				last_name: replyUserDatLastName
+				first_name: data.datFirstName,
+				last_name: data.datLastName
 			},
 			nom: {
-				first_name: replyUserNomFirstName
+				first_name: data.nomFirstName
 			}
 		};
 	}
