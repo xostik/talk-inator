@@ -73,6 +73,7 @@ var require = {
             'underscore':           'lib/underscore/underscore',
             'backbone':             'lib/backbone/backbone',
             'aspic':                'lib/backbone/aspic',
+            'ifvisible':            'lib/ifvisible/ifvisible',
             'jquery.ui.widget':     'lib/file-uploader/jquery.ui.widget',
             'fileuploader':         'lib/file-uploader/jquery.fileupload',
             'google-geocomplite':   'http://maps.googleapis.com/maps/api/js?sensor=false&amp;libraries=places'

@@ -1,4 +1,4 @@
-define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'vk-comments', 'comments-tree', 'post', 'aspic'], function( _, Backbone, $, user, UserModels, VK_Comment, CommentsTree, Post ){
+define(['underscore', 'backbone', 'jquery', 'ifvisible', 'user', 'user-models', 'vk-comments', 'comments-tree', 'post', 'aspic'], function( _, Backbone, $, ifvisible, user, UserModels, VK_Comment, CommentsTree, Post ){
 
     var VK_TalkLoader = Backbone.AspicModel.extend({
         initialize: function () {
@@ -20,8 +20,13 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'vk-comments'
                 commentsReplyCash: {}, // cid (reply on comment): []
                 exeQueue: [],
                 lastExeTime: 0,
-                usersDataRequestInQueue: false
+                usersDataRequestInQueue: false,
+
+                userActivity: 'active' //hided, inactive
             });
+
+
+            this.initUserActivity();
 
             this.user().whenReady(function(u){
                 if(u.isAuth()){
@@ -34,6 +39,31 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'vk-comments'
             this.user().onChangeStatus(function(u){
                 if(u.isAuth()){
                     _this._startRequestingTalk(_this.talkPath());
+                }
+            });
+        },
+
+        // ------------------
+
+        initUserActivity: function(){
+            var _this = this;
+
+            ifvisible.setIdleDuration(config.UNACTIVE_USER_PERIOD/1000);
+
+            ifvisible.on("idle", function(){
+                _this.userActivity('inactive');
+                console.log('inactive');
+            });
+
+            ifvisible.on("wakeup", function(){
+                _this.userActivity('active');
+                console.log('active');
+            });
+
+            ifvisible.on('statusChanged', function(e){
+                if(e.status == 'hidden'){
+                    _this.userActivity('hidden');
+                    console.log('hidden');
                 }
             });
         },
@@ -101,22 +131,60 @@ define(['underscore', 'backbone', 'jquery', 'user', 'user-models', 'vk-comments'
         // ------------------
 
         _startPingNewComments: function(delay){
-            var offset = Math.round(this.lastCommentCount()/50.0) * 50 - 50;
+            var offset = Math.round(this.lastCommentCount()/50.0) * 50 - 50,
+                f;
             offset = (offset<0) ? 0: offset;
+            f = _.bind( this._commentRequestFunction, this, this.post(), offset );
 
-            _.delay(function(ctx, offs){
-                var f = _.bind( ctx._commentRequestFunction, ctx, ctx.post(), offs ),
-                    pingInterval = setInterval(f, config.PING_NEW_COMMENT_PERIOD);
-                ctx.pingInterval(pingInterval);
-            }, delay, this, offset);
+            _.delay(function(ctx, pingFunction){
+                ctx._pingNewCommentsLoop(pingFunction);
+            }, delay, this, f);
+
+
+        },
+
+        // ------------------
+
+        _pingNewCommentsLoop: function(pingFunction){
+            var timeoutId,
+                delay = -1,
+                _this = this;
+
+            if(this.userActivity() == 'active'){
+                delay = config.PING_NEW_COMMENT_PERIOD;
+            }else if(this.userActivity() == 'inactive'){
+                delay = config.PING_NEW_COMMENT_PERIOD_FOR_UNACTIVE_USER;
+            }
+
+            if(this.userActivity() != 'hidden'){
+                clearTimeout(this.pingInterval());
+                timeoutId = setTimeout(function(){
+                    pingFunction();
+                    _this._pingNewCommentsLoop(pingFunction);
+                }, delay);
+
+
+                this.pingInterval(timeoutId);
+            }
+
+            if(this.userActivity() != 'active'){
+                this.off('change:userActivity');
+                this.once('change:userActivity', function(){
+                    if(this.userActivity() == 'active'){
+                        this._pingNewCommentsLoop(pingFunction);
+                    }
+                }, this);
+            }
         },
 
         // ------------------
 
         _stopPingNewComments: function(){
             if(this.pingInterval()){
-                clearInterval(this.pingInterval());
+                clearTimeout(this.pingInterval());
             }
+
+            this.off('change:userActivity');
         },
 
         // ------------------
