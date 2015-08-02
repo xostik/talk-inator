@@ -4,9 +4,15 @@
     grunt.initConfig({
         less : {
             default: {
-                src: ['styles/less/talk.less'],
+                src: ['styles/less/main.less'],
                 dest: 'styles/css/main.css'
             }
         }
     });
+
+    grunt.task.registerTask('default',
+        [
+            'less'
+        ]
+    );
 };

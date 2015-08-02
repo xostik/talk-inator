@@ -78,10 +78,10 @@ define(['underscore', 'backbone', 'jquery', 'ifvisible', 'user', 'user-models', 
                 var n = r.response.items[0].comments.count,
                     likes = r.response.items[0].likes.count,
                     post = r.response.items[0],
-                    user = _this._handleUser(post.from_id);
+                    userProvider = _this._getUserProvider();
 
                 post.likes = likes;
-                post = new Post(post, {user: user});
+                post = new Post(post, {userProvider: userProvider});
 
                 _this.post(post);
                 _this._handleExtendedInfo(r.response);
@@ -92,6 +92,17 @@ define(['underscore', 'backbone', 'jquery', 'ifvisible', 'user', 'user-models', 
 
                 _this._resolveAllCommentsReady((Math.floor(n/100.0)+4)*config.MIN_REQUEST_PERIOD);
             });
+        },
+
+        // ------------------
+
+        _getUserProvider: function(){
+            var _this = this;
+           return {
+               getUser: function(uid){
+                   return _this._handleUser(uid);
+               }
+           };
         },
 
         // ------------------

@@ -9,4 +9,13 @@
     <div class="audio-attachments attachments-i"></div>
 </div>
 
-<a class="comment-post" href="javascript:;">Комментировать</a> <span class="likes" title="Количество лайков в ВК. Ставить лайки из талкинатора, к сожалению нельзя."></span>
+<% if(copy_history().length > 0){ %>
+    <div class="repost-from repost-from-<%= id %>"></div>
+    <% if(copy_history().length > 1){ %>
+        <a class="show-next-repost">Показать источник</a>
+    <% } %>
+<% } %>
+
+<% if(typeof isRepost == "undefined" || !isRepost){ %>
+    <a class="comment-post" href="javascript:;">Комментировать</a> <span class="likes" title="Количество лайков в ВК. Ставить лайки из талкинатора, к сожалению нельзя."></span>
+<% } %>

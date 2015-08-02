@@ -57,6 +57,11 @@
 		overflow: hidden;
 	}
 
+    .emoji{
+        vertical-align: top;
+        margin: 1px 0px;
+    }
+
 	.open-comments{
 		display: none;
 		float: left;
@@ -297,4 +302,18 @@
 
 .presentation{
     background-color: #f4f3da;
+}
+
+.block-divider{
+    text-align: center;
+    margin-top: 15px;
+    &:before{
+        content: '~';
+        display: inline-block;
+        font-family: times new roman;
+        font-weight: bold;
+        font-size: 29px;
+        line-height: 10px;
+        opacity: 0.3;
+    }
 }

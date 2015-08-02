@@ -1,6 +1,5 @@
 define(['abstract-region', 'underscore', requirePaths['start-region.tpl'], 'router'], function(Region, _, tpl, router){
     var StartRegion = Region.extend({
-        tagName: 'form',
 
         id: 'start-region-wrap',
 
@@ -13,7 +12,8 @@ define(['abstract-region', 'underscore', requirePaths['start-region.tpl'], 'rout
         goOnTalk: function(e){
             e.preventDefault();
 
-            var talkUrl = this.$el.find('#talk-path').val(),
+            var $talkPath = this.$el.find('.talk-path'),
+                talkUrl = $talkPath.eq(0).val() || $talkPath.eq(1).val(),
                 talkPath = this.findPathInUrl(talkUrl);
 
             if(talkPath){

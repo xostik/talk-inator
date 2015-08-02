@@ -1,3 +1,128 @@
 #start-region-wrap{
+    margin-top: 30px;
+    margin-bottom: 50px;
+    font-family: 'PT Sans Narrow';
+    font-weight: normal;
+    color: #87867c;
 
+    .presentation{
+        overflow: hidden;
+    }
+
+    .presentation-in{
+        position: relative;
+
+        &:before{
+            content: '';
+            position: absolute;
+            top: 23px;
+            left: 384px;
+            width: 90px;
+            height: 80px;
+            background: url("/i/magic-arrow.png") no-repeat;
+        }
+    }
+
+    .presentation-title-wrap{
+        overflow: hidden;
+        margin: 3px 0 21px 0;;
+    }
+
+    .presentation-title{
+        display: block;
+        width: 396px;
+        font-size: 23pt;
+        margin-top: 20px;
+        font-weight: normal;
+    }
+
+    .presentation-title-left{
+        float: left;
+
+        &:after{
+            content: "...";
+        }
+    }
+
+    .presentation-title-right{
+        float: right;
+        &:before{
+            content: "...";
+        }
+    }
+
+    .presentation-left{
+        float: left;
+    }
+
+    .presentation-right{
+        float: right;
+        margin-right: 40px;
+    }
+
+    .item-option{
+        position: relative;
+        width: 300px;
+        padding-left: 57px;
+        font-size: 13pt;
+        margin-top: 20px;
+        margin-bottom: 26px;
+
+        &:before{
+            content: '';
+            position: absolute;
+            top: 0px;
+            left: 15px;
+            width: 26px;
+            height: 26px;
+            background-image: url('/i/sprite.png');
+        }
+    }
+
+    .positive-option:before{
+        background-position: -27px 0;
+    }
+
+    .icn-icn{
+        position: relative;
+        top: 5px;
+        left: -60px;
+    }
+}
+
+.content-item {
+    color: #87867c;
+    font-size: 13pt;
+
+    h2{
+        font-weight: normal;
+        font-size: 23pt;
+        margin-top: 38px;
+        margin-bottom: 15px;
+    }
+
+    .content-subitem{
+        width: 700px;
+        margin-left: 20px;
+    }
+
+    .paragraph{
+        margin: 13px 0 13px 2px;
+    }
+
+    .discussion-list{
+        margin-top: 6px;
+        margin-bottom: 6px;
+        line-height: 19pt;
+    }
+}
+
+#talk-path-form-duplicate .talk-path{
+    font-family: 'PT Sans Narrow';
+    font-style: italic;
+    font-size: 10pt;
+    margin-top: 7px;
+    width: 330px;
+    padding: 1px 6px 3px 6px;
+    border: 1px dotted #ccc;
 }

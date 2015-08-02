@@ -449,6 +449,9 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
 
             VK.Api.call('video.get', { videos: [vid], v:5.21 }, function (r) {
                 var player = _this.templates.videoPlayer(r.response.items[0]);
+                if(player.indexOf('https') == -1){
+                    player = player.replace('http', 'https');
+                }
                 $el
                     .after(player)
                     .remove();
@@ -504,6 +507,10 @@ define(['abstract-region', 'underscore', 'user', 'talk-items-views', requirePath
             this.clearLastUserCommentAfterLastReply();
 
             this.cancelReplyComment();
+            $('#receiver')
+                .attr('data-message', '{}')
+            .get(0)
+                .click();
             this.openAnswer();
         },
 

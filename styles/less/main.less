@@ -42,3 +42,38 @@ a{
 	}
 }
 
+#talk-path-form{
+    position: relative;
+
+    .talk-path{
+        position: absolute;
+        top: -49px;
+        left: 124px;
+        border: 1px dotted #ccc;
+        padding: 3px 9px 4px 9px;
+        font-size: 8pt;
+        width: 260px;
+
+        &::-webkit-input-placeholder {
+            font-style: italic;
+            color: #ccc;
+        }
+
+        &:-moz-placeholder { /* Firefox 18- */
+            font-style: italic;
+            color: #ccc;
+        }
+
+        &::-moz-placeholder {  /* Firefox 19+ */
+            font-style: italic;
+            color: #ccc;
+        }
+
+        &:-ms-input-placeholder {
+            font-style: italic;
+            color: #ccc;
+        }
+    }
+
+}
+

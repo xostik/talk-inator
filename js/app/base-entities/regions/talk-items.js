@@ -1,12 +1,15 @@
-define(['jquery', 'underscore', 'backbone', requirePaths['comment.tpl'], requirePaths['post.tpl'], 'aspic'], function( $, _, Backbone, commentTPL, postTPL ){
+define(['jquery', 'underscore', 'backbone', 'post', requirePaths['comment.tpl'], requirePaths['post.tpl'], 'aspic'], function( $, _, Backbone, Post, commentTPL, postTPL ){
     var localTpls = {
-        photoAttachment: _.template('<a class="img-wrap preview" href="javascript:;" data-preview-url="<%= photo_130 %>" data-origin-url="<%= photo_604 %>"><img src="<%= photo_130 %>" /></a>'),
-        videoAttachment: _.template('<a class="video-wrap preview" href="javascript:;" data-id="<%= id %>" data-owner-id="<%= owner_id %>" data-key="<%= access_key %>" data-content="<%= title %>"><img src="<%= photo_320 %>" /></a>'),
-        docAttachment: _.template('<a class="doc-wrap preview" href="javascript:;" data-preview-url="<%= photo_130 %>" data-origin-url="<%= url %>"><img src="<%= photo_130 %>" /></a>'),
-        audioAttachment: _.template('<a href="<%= url %>" target="_blank" class="audio-wrap" data-content="(♪)"><%= artist %> &ndash; <%= title %></a>'),
-        linkAttachment: _.template('<a href="<%= url %>" target="_blank" class="link-wrap"><h2 class="link-title" data-content="Ссылка" data-link="<%= url %>"><%= title %></h2> <p class="link-body"><%= description %></p></a>'),
-        pageAttachment: _.template('<a href="<%= view_url %>" target="_blank" class="page-wrap"><h2 class="page-title" data-content="Страница"><%= title %></h2></a>')
-    };
+            photoAttachment: _.template('<a class="img-wrap preview" href="javascript:;" data-preview-url="<%= photo_130 %>" data-origin-url="<%= photo_604 %>"><img src="<%= photo_130 %>" /></a>'),
+            videoAttachment: _.template('<a class="video-wrap preview" href="javascript:;" data-id="<%= id %>" data-owner-id="<%= owner_id %>" data-key="<%= access_key %>" data-content="<%= title %>"><img src="<%= photo_320 %>" /></a>'),
+            docAttachment: _.template('<a class="doc-wrap preview" href="javascript:;" data-preview-url="<%= photo_130 %>" data-origin-url="<%= url %>"><img src="<%= photo_130 %>" /></a>'),
+            audioAttachment: _.template('<a href="<%= url %>" target="_blank" class="audio-wrap" data-content="(♪)"><%= artist %> &ndash; <%= title %></a>'),
+            linkAttachment: _.template('<a href="<%= url %>" target="_blank" class="link-wrap"><h2 class="link-title" data-content="Ссылка" data-link="<%= url %>"><%= title %></h2> <p class="link-body"><%= description %></p></a>'),
+            pageAttachment: _.template('<a href="<%= view_url %>" target="_blank" class="page-wrap"><h2 class="page-title" data-content="Страница"><%= title %></h2></a>'),
+            stickerAttachment: _.template('<img src="<%= photo_64 %>" />')
+        },
+
+        repostTPL = _.template('<img src="<%= photo_64 %>" />');
 
 
     var TalkItemView = Backbone.AspicView.extend({
@@ -62,6 +65,9 @@ define(['jquery', 'underscore', 'backbone', requirePaths['comment.tpl'], require
                         case 'doc':{
                             this.addDoc(attachments[i].doc);
                         } break;
+                        case 'sticker':{
+                            this.addSticker(attachments[i].sticker);
+                        } break;
                     }
                 }
             },
@@ -91,17 +97,25 @@ define(['jquery', 'underscore', 'backbone', requirePaths['comment.tpl'], require
             },
 
             addLink: function(attachment){
+                attachment.description = attachment.description || '';
+
                 this.$el.find('.link-attachments')
                     .append(this.templates.linkAttachment(attachment))
                     .show();
             },
 
             addDoc: function(attachment){
-                if(attachment.ext == 'gif'){
-                    this.$el.find('.doc-attachments')
-                        .append(this.templates.docAttachment(attachment))
-                        .show();
-                }
+                attachment.description = attachment.description || '';
+
+                this.$el.find('.sticker-attachments')
+                    .append(this.templates.linkAttachment(attachment))
+                    .show();
+            },
+
+            addSticker: function(attachment){
+                this.$el.find('.sticker-attachments')
+                    .append(this.templates.stickerAttachment(attachment))
+                    .show();
             },
 
             updateHtmlCache: $.noop,
@@ -130,7 +144,47 @@ define(['jquery', 'underscore', 'backbone', requirePaths['comment.tpl'], require
         }),
 
         PostView = TalkItemView.extend({
-            template: _.template(postTPL)
+            template: _.template(postTPL),
+            //repostTemplate: _.template(localTpls.repostTPL),
+
+            events: {
+                'click .show-repost': 'onShowRepostClickHandler'
+            },
+
+            addRepost: function(repost){
+
+            },
+
+            beforeInsert: function($el){
+                this.appendRepostSource($el);
+            },
+
+            appendRepostSource: function($el){
+                // если есть источник:
+                // создаем вью источника
+                // вставляем нам
+                var userProvider = this.model.get('userProvider');
+
+                if(this.model.copy_history().length == 0){
+                    return;
+                }
+
+                this.repostSourceView = new PostView({
+                    model: new Post(this.model.copy_history()[0], {userProvider: userProvider})
+                });
+
+                $el.find('.repost-from').append(
+                    this.repostSourceView.render()
+                );
+            },
+
+            onShowRepostClickHandler: function(e){
+                var _this = this,
+                    $el = $(e.currentTarget),
+                    repostId = $el.data('repost-id');
+
+                this.trigger('startWaitingRepost', repostId);
+            }
         }),
 
         CommentView = TalkItemView.extend({
@@ -188,7 +242,10 @@ define(['jquery', 'underscore', 'backbone', requirePaths['comment.tpl'], require
             },
 
             commentText: function(){
-                return this.clearCommentText(this.model.text());
+                var tx = this.model.text();
+                tx = this.clearCommentText(tx);
+                tx = _.adaptVkEmoji(tx);
+                return tx;
             },
 
             clearCommentText: function(tx){

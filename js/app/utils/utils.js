@@ -1,18 +1,19 @@
 define(['underscore'], function(_){
     var mounth = [
-        'января',
-        'февраля',
-        'марта',
-        'апреля',
-        'мая',
-        'июня',
-        'июля',
-        'августа',
-        'сентября',
-        'октября',
-        'ноября',
-        'декабря'
-    ];
+            'января',
+            'февраля',
+            'марта',
+            'апреля',
+            'мая',
+            'июня',
+            'июля',
+            'августа',
+            'сентября',
+            'октября',
+            'ноября',
+            'декабря'
+        ],
+        vkEmojiRX = /(\ud83d)([\s\S])/;
     _.mixin({
         'inherit': function (child, parent) {
             var f = new Function();
@@ -76,6 +77,14 @@ define(['underscore'], function(_){
             }
 
             return print_t.getDate() + ' ' + mounth[print_t.getMonth()] + ' ' + print_t.getFullYear();
+        },
+
+        adaptVkEmoji: function(str){
+            var result = str.replace(vkEmojiRX, function(s, s1, s2){
+                return '<img class="emoji" src="https://vk.com/images/emoji/D83D' + s2.charCodeAt(0).toString( 16 ).toUpperCase() + '.png" />';
+            });
+            vkEmojiRX.lastIndex = 0;
+            return result;
         }
     });
 
